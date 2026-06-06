@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Command Center | Admin V3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .modal-bg { background: rgba(0, 15, 41, 0.9); backdrop-filter: blur(8px); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #001529; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans" onload="initAdmin()">
+
+    <div id="adminAuth" class="fixed inset-0 bg-[#001529] flex items-center justify-center z-50">
+        <div class="bg-white p-10 rounded-xl shadow-2xl w-[400px] border-t-8 border-orange-500">
+            <h2 class="text-2xl font-black mb-6 text-blue-900 uppercase italic">Officer Login</h2>
+            <div class="space-y-4">
+                <input type="email" id="admEmail" placeholder="Official Email" class="w-full p-3 border rounded outline-none focus:ring-2 focus:ring-blue-400">
+                <input type="password" id="admPass" placeholder="Secret Key" class="w-full p-3 border rounded outline-none focus:ring-2 focus:ring-blue-400">
+                <button onclick="adminSignIn()" class="w-full bg-blue-900 text-white p-3 rounded font-bold hover:bg-blue-800 transition uppercase tracking-widest">Verify & Enter</button>
+                <p class="text-[10px] text-gray-400 text-center uppercase tracking-tighter">Authorized Personnel Only</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard" class="hidden">
+        <nav class="bg-[#001529] p-4 text-white shadow-xl flex justify-between items-center px-10 border-b border-blue-800">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">🛡️</span>
+                <h1 class="font-black italic tracking-tighter uppercase text-xl">Cyber <span class="text-orange-500">CMS</span></h1>
+            </div>
+            
+            <div id="superAdminTools" class="hidden flex items-center space-x-4">
+                <label class="text-[10px] font-bold text-blue-400 uppercase tracking-widest italic">Command Center View:</label>
+                <select id="globalDistrictFilter" onchange="loadComplaints()" class="bg-blue-900 border border-blue-700 text-xs p-2 rounded-lg outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer">
+                    <option value="ALL">All Karnataka (State View)</option>
+                    <option value="Bagalkot">Bagalkot</option><option value="Ballari">Ballari</option><option value="Belagavi">Belagavi</option><option value="Bengaluru Rural">Bengaluru Rural</option><option value="Bengaluru Urban">Bengaluru Urban</option><option value="Bidar">Bidar</option><option value="Chamarajanagar">Chamarajanagar</option><option value="Chikballapur">Chikballapur</option><option value="Chikkamagaluru">Chikkamagaluru</option><option value="Chitradurga">Chitradurga</option><option value="Dakshina Kannada">Dakshina Kannada</option><option value="Davanagere">Davanagere</option><option value="Dharwad">Dharwad</option><option value="Gadag">Gadag</option><option value="Hassan">Hassan</option><option value="Haveri">Haveri</option><option value="Kalaburagi">Kalaburagi (Gulbarga)</option><option value="Kodagu">Kodagu</option><option value="Kolar">Kolar</option><option value="Koppal">Koppal</option><option value="Mandya">Mandya</option><option value="Mysuru">Mysuru</option><option value="Raichur">Raichur</option><option value="Ramanagara">Ramanagara</option><option value="Shivamogga">Shivamogga</option><option value="Tumakuru">Tumakuru</option><option value="Udupi">Udupi</option><option value="Uttara Kannada">Uttara Kannada</option><option value="Vijayanagara">Vijayanagara</option><option value="Vijayapura">Vijayapura</option><option value="Yadgir">Yadgir</option>
+                </select>
+            </div>
+
+            <div class="flex items-center space-x-6">
+                <div class="text-right">
+                    <p id="adminName" class="text-xs font-bold uppercase">Officer</p>
+                    <p id="adminJurisdiction" class="text-[9px] text-blue-400 font-bold uppercase tracking-widest">District</p>
+                </div>
+                <button onclick="handleLogout()" class="bg-red-600 px-4 py-1 rounded-full text-xs font-bold hover:bg-red-700 transition shadow-lg">Logout</button>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto mt-10 p-4 pb-20">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-blue-600"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Reports</p><p id="statTotal" class="text-4xl font-black text-slate-800">0</p></div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-yellow-500"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pending Verification</p><p id="statPending" class="text-4xl font-black text-slate-800">0</p></div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-green-500"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cases Resolved</p><p id="statResolved" class="text-4xl font-black text-green-600">0</p></div>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 text-[10px] text-gray-400 uppercase font-black border-b tracking-widest">
+                        <tr><th class="p-5">Complaint ID</th><th class="p-5">Victim Details</th><th class="p-5">Crime Type</th><th class="p-5">District</th><th class="p-5">Status</th></tr>
+                    </thead>
+                    <tbody id="adminTableBody" class="divide-y text-sm cursor-pointer">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailModal" class="fixed inset-0 modal-bg hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row h-[85vh]">
+            <div class="md:w-1/2 bg-slate-900 flex items-center justify-center p-6 border-r border-slate-800">
+                <img id="modalImg" src="" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+                <p id="noImg" class="text-white font-black text-xs uppercase tracking-[0.3em] opacity-30 hidden">No Evidence Uploaded</p>
+            </div>
+            <div class="md:w-1/2 p-8 overflow-y-auto space-y-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 id="modalID" class="text-3xl font-black text-blue-900 italic tracking-tighter">CC-XXXXXX</h3>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">Official Case Record</p>
+                    </div>
+                    <button onclick="closeModal()" class="text-gray-300 hover:text-red-500 text-2xl font-black transition-colors">&times;</button>
+                </div>
+
+                <div class="bg-gray-50 p-6 rounded-2xl space-y-4 border border-gray-100 shadow-inner">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><p class="text-[9px] font-bold text-gray-400 uppercase">Victim Name</p><p id="modalName" class="font-bold text-slate-800 text-sm"></p></div>
+                        <div><p class="text-[9px] font-bold text-gray-400 uppercase">Contact</p><p id="modalMobile" class="font-bold text-slate-800 text-sm"></p></div>
+                        <div><p class="text-[9px] font-bold text-gray-400 uppercase">District</p><p id="modalDist" class="font-bold text-blue-800 text-sm uppercase"></p></div>
+                        <div><p class="text-[9px] font-bold text-gray-400 uppercase">Crime Category</p><p id="modalCrime" class="font-bold text-red-600 text-sm"></p></div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-2 block tracking-widest">Incident Description</label>
+                    <p id="modalDesc" class="text-xs text-gray-600 bg-slate-50 p-4 rounded-xl border italic leading-relaxed"></p>
+                </div>
+
+                <div class="flex space-x-3 pt-6 border-t">
+                    <button onclick="updateStatusFromModal('Resolved')" class="flex-1 bg-green-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-green-700 transition active:scale-95 shadow-lg">Mark Resolved</button>
+                    <button onclick="closeModal()" class="px-8 border-2 border-slate-100 py-4 rounded-2xl font-bold uppercase text-[10px] text-slate-400 hover:bg-slate-50 transition">Dismiss</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const _supabase = supabase.createClient("https://vbnnrgalrecuayjabxld.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZibm5yZ2FscmVjdWF5amFieGxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5NDgxNzUsImV4cCI6MjA4ODUyNDE3NX0.a9EFSx9CEisEKXSQ6kcqomxdOxpS7CfCpIijIKys3bk");
+
+        let currentProfile = null;
+        let selectedID = null;
+
+        async function initAdmin() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await _supabase.from('profiles').select('*').eq('id', user.id).single();
+                if (profile && profile.role !== 'user') {
+                    showDashboard(profile);
+                }
+            }
+        }
+
+        async function adminSignIn() {
+            const email = document.getElementById('admEmail').value;
+            const pass = document.getElementById('admPass').value;
+            const { data, error } = await _supabase.auth.signInWithPassword({ email, password: pass });
+            
+            if (error) return alert("Security Error: " + error.message);
+
+            const { data: profile } = await _supabase.from('profiles').select('*').eq('id', data.user.id).single();
+            if (profile && profile.role !== 'user') {
+                showDashboard(profile);
+            } else {
+                alert("ACCESS DENIED: No official role assigned to this UID.");
+                await _supabase.auth.signOut();
+            }
+        }
+
+        function showDashboard(profile) {
+            currentProfile = profile;
+            document.getElementById('adminAuth').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('adminName').innerText = profile.full_name;
+            document.getElementById('adminJurisdiction').innerText = profile.role === 'super_admin' ? 'State Command' : profile.district;
+            
+            if (profile.role === 'super_admin') {
+                document.getElementById('superAdminTools').style.display = 'flex';
+            }
+            loadComplaints();
+        }
+
+        async function loadComplaints() {
+            const filter = document.getElementById('globalDistrictFilter').value;
+            let query = _supabase.from('complaints').select('*');
+
+            if (currentProfile.role === 'district_admin') {
+                query = query.eq('district', currentProfile.district);
+            } else if (filter !== 'ALL') {
+                query = query.eq('district', filter);
+            }
+
+            const { data: complaints, error } = await query.order('created_at', { ascending: false });
+            if (error) return console.error(error);
+
+            document.getElementById('statTotal').innerText = complaints.length;
+            document.getElementById('statResolved').innerText = complaints.filter(c => c.status === 'Resolved').length;
+            document.getElementById('statPending').innerText = complaints.filter(c => c.status === 'Pending').length;
+
+            const tbody = document.getElementById('adminTableBody');
+            tbody.innerHTML = "";
+            
+            if(complaints.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-300 font-bold uppercase italic tracking-widest">No Incident Records Found</td></tr>`;
+                return;
+            }
+
+            complaints.forEach(item => {
+                const statusColor = item.status === 'Resolved' ? 'text-green-600' : 'text-orange-500';
+                tbody.innerHTML += `
+                    <tr onclick='openModal(${JSON.stringify(item)})' class="hover:bg-blue-50 border-b transition-colors group">
+                        <td class="p-5 font-bold text-blue-900 group-hover:underline">${item.complaint_id}</td>
+                        <td class="p-5 font-bold text-slate-700">${item.user_name}</td>
+                        <td class="p-5 italic text-red-500 font-medium">${item.crime_type}</td>
+                        <td class="p-5 text-[10px] font-black uppercase text-slate-400">${item.district}</td>
+                        <td class="p-5 text-[10px] font-black uppercase ${statusColor} italic">${item.status}</td>
+                    </tr>`;
+            });
+        }
+
+        function openModal(item) {
+            selectedID = item.complaint_id;
+            document.getElementById('modalID').innerText = item.complaint_id;
+            document.getElementById('modalName').innerText = item.user_name;
+            document.getElementById('modalMobile').innerText = item.mobile;
+            document.getElementById('modalDist').innerText = item.district;
+            document.getElementById('modalCrime').innerText = item.crime_type;
+            document.getElementById('modalDesc').innerText = item.details;
+            
+            const img = document.getElementById('modalImg');
+            const noImg = document.getElementById('noImg');
+            if (item.evidence_url && item.evidence_url !== "None" && item.evidence_url !== "No link") {
+                img.src = item.evidence_url; img.style.display = 'block'; noImg.style.display = 'none';
+            } else {
+                img.style.display = 'none'; noImg.style.display = 'block';
+            }
+            document.getElementById('detailModal').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('detailModal').style.display = 'none'; }
+
+        async function updateStatusFromModal(stat) {
+            const { error } = await _supabase.from('complaints').update({ status: stat }).eq('complaint_id', selectedID);
+            if (error) alert(error.message);
+            else { closeModal(); loadComplaints(); }
+        }
+
+        function handleLogout() { _supabase.auth.signOut().then(() => location.reload()); }
+    </script>
+</body>
+</html>

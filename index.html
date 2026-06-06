@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home | National Cyber Crime Reporting Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 font-sans">
+
+    <div class="bg-slate-900 text-white py-1 px-10 flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
+        <span>Ministry of Home Affairs | Govt of India</span>
+        <span id="liveDate"></span>
+    </div>
+
+    <header class="bg-white border-b-4 border-orange-500 py-10 shadow-sm">
+        <div class="container mx-auto px-10 flex flex-col md:flex-row items-center justify-between">
+            <div class="flex items-center space-x-4 mb-6 md:mb-0">
+                <span class="text-5xl">🇮🇳</span>
+                <div>
+                    <h1 class="text-3xl font-black text-blue-900 tracking-tighter uppercase italic">Cyber <span class="text-orange-600">Secure</span></h1>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">National Incident Reporting System</p>
+                </div>
+            </div>
+            
+            <div class="text-right hidden md:block border-l-2 pl-6 border-slate-100">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Emergency Helpline</p>
+                <p class="text-xl font-black text-blue-900 italic tracking-tighter">1930</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto mt-12 px-6">
+        <div class="max-w-4xl mx-auto text-center mb-16">
+            <h2 class="text-4xl font-black text-slate-800 mb-4 tracking-tight">Protecting Digital India</h2>
+            <p class="text-slate-600 text-lg leading-relaxed italic">
+                A unified platform for citizens to report cyber crimes and for law enforcement agencies to track, investigate, and resolve digital fraud across all 31 districts of Karnataka.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto">
+            
+            <div class="bg-white p-10 rounded-3xl shadow-xl border border-slate-100 hover:border-blue-500 transition-all transform hover:-translate-y-2 group">
+                <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:bg-blue-900 transition-colors">👤</div>
+                <h3 class="text-2xl font-black text-blue-900 mb-2 uppercase">Citizen Portal</h3>
+                <p class="text-sm text-slate-500 mb-8 leading-relaxed">Report financial fraud, identity theft, or bullying. Track your complaint status in real-time with your unique Complaint ID.</p>
+                <a href="auth.html" class="inline-block w-full bg-blue-900 text-white text-center py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-blue-800 shadow-lg transition">Citizen Login / Sign-up</a>
+            </div>
+
+            <div class="bg-white p-10 rounded-3xl shadow-xl border border-slate-100 hover:border-orange-500 transition-all transform hover:-translate-y-2 group">
+                <div class="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:bg-orange-600 transition-colors">👮</div>
+                <h3 class="text-2xl font-black text-blue-900 mb-2 uppercase">Officer Portal</h3>
+                <p class="text-sm text-slate-500 mb-8 leading-relaxed">Dedicated dashboard for District Admins and Super Admins to review evidence, route cases, and resolve pending complaints.</p>
+                <a href="admin.html" class="inline-block w-full bg-slate-900 text-white text-center py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-slate-800 shadow-lg transition border-b-4 border-orange-500">Go to Management System</a>
+            </div>
+
+        </div>
+
+        <div class="mt-24 mb-20">
+            <h3 class="text-center text-xs font-black text-slate-400 uppercase tracking-[0.3em] mb-10">System Architecture & Core Features</h3>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div class="bg-white p-4 rounded-xl text-center shadow-sm border"><p class="text-[10px] font-bold">RBAC Roles</p></div>
+                <div class="bg-white p-4 rounded-xl text-center shadow-sm border"><p class="text-[10px] font-bold">PostgreSQL DB</p></div>
+                <div class="bg-white p-4 rounded-xl text-center shadow-sm border"><p class="text-[10px] font-bold">Real-time Status</p></div>
+                <div class="bg-white p-4 rounded-xl text-center shadow-sm border"><p class="text-[10px] font-bold">Evidence Storage</p></div>
+                <div class="bg-white p-4 rounded-xl text-center shadow-sm border"><p class="text-[10px] font-bold">Voice Recognition</p></div>
+                <div class="bg-white p-4 rounded-xl text-center shadow-sm border"><p class="text-[10px] font-bold">District Routing</p></div>
+                <div class="bg-white p-4 rounded-xl text-center shadow-sm border"><p class="text-[10px] font-bold">Secure Auth</p></div>
+                <div class="bg-white p-4 rounded-xl text-center shadow-sm border"><p class="text-[10px] font-bold">Analytics Dash</p></div>
+                <div class="bg-white p-4 rounded-xl text-center shadow-sm border"><p class="text-[10px] font-bold">Multi-Lingual</p></div>
+                <div class="bg-white p-4 rounded-xl text-center shadow-sm border"><p class="text-[10px] font-bold">Scalable Cloud</p></div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-slate-900 text-white py-10 px-10">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center opacity-50">
+            <p class="text-[10px] font-bold uppercase tracking-widest">© 2026 BCA Final Year Project - Karnataka Cyber Safe</p>
+            <div class="flex space-x-4 mt-4 md:mt-0">
+                <span class="text-[10px] font-bold uppercase">Supabase Cloud Stack</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('liveDate').innerText = new Date().toDateString();
+    </script>
+</body>
+</html>

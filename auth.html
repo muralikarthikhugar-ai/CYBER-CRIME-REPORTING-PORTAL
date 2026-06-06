@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login / Register | National Cyber Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-100 font-sans flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-md border border-gray-100">
+        <div class="bg-[#002e5b] p-6 text-center text-white border-b-4 border-orange-500">
+            <span class="text-3xl">🇮🇳</span>
+            <h2 class="text-xl font-black uppercase tracking-widest mt-2">National Cyber Portal</h2>
+            <p class="text-[10px] text-slate-300 uppercase tracking-tighter mt-1">Identity Verification Gate</p>
+        </div>
+
+        <div class="p-8">
+            <div class="flex border-b mb-6 text-sm font-bold uppercase tracking-wider text-center">
+                <button id="tabLogin" onclick="switchTab('login')" class="flex-1 pb-3 text-blue-950 border-b-2 border-blue-900">Sign In</button>
+                <button id="tabRegister" onclick="switchTab('register')" class="flex-1 pb-3 text-gray-400 border-b-2 border-transparent">Create Account</button>
+            </div>
+
+            <form id="authForm" class="space-y-4">
+                <div id="nameField" class="hidden">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Full Name</label>
+                    <input type="text" id="fullName" placeholder="Enter full name" class="w-full p-3 border rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Email Address</label>
+                    <input type="email" id="email" placeholder="name@example.com" class="w-full p-3 border rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-400" required>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Password</label>
+                    <input type="password" id="password" placeholder="••••••••" class="w-full p-3 border rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-400" required>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-[#002e5b] text-white font-black py-4 rounded-xl hover:bg-blue-900 shadow-xl uppercase tracking-widest transition transform active:scale-95">
+                    Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const _supabase = supabase.createClient("https://vbnnrgalrecuayjabxld.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZibm5yZ2FscmVjdWF5amFieGxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5NDgxNzUsImV4cCI6MjA4ODUyNDE3NX0.a9EFSx9CEisEKXSQ6kcqomxdOxpS7CfCpIijIKys3bk");
+        
+        let currentMode = 'login';
+
+        function switchTab(mode) {
+            currentMode = mode;
+            const nameField = document.getElementById('nameField');
+            const submitBtn = document.getElementById('submitBtn');
+            const tabLogin = document.getElementById('tabLogin');
+            const tabRegister = document.getElementById('tabRegister');
+
+            if (mode === 'register') {
+                nameField.classList.remove('hidden');
+                submitBtn.innerText = "Register Account";
+                tabRegister.className = "flex-1 pb-3 text-blue-950 border-b-2 border-blue-900 font-bold";
+                tabLogin.className = "flex-1 pb-3 text-gray-400 border-b-2 border-transparent";
+            } else {
+                nameField.classList.add('hidden');
+                submitBtn.innerText = "Sign In";
+                tabLogin.className = "flex-1 pb-3 text-blue-950 border-b-2 border-blue-900 font-bold";
+                tabRegister.className = "flex-1 pb-3 text-gray-400 border-b-2 border-transparent";
+            }
+        }
+
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            btn.disabled = true;
+            btn.innerText = "VERIFYING WITH CLOUD...";
+
+            try {
+                if (currentMode === 'register') {
+                    const fullName = document.getElementById('fullName').value;
+                    if(!fullName) throw new Error("Name is required for registration.");
+
+                    // 1. Sign up user in Supabase Auth
+                    const { data: authData, error: authError } = await _supabase.auth.signUp({ email, password });
+                    if (authError) throw authError;
+
+                    if (authData.user) {
+                        // 2. Insert into profiles table via manual insert fallback or trigger validation
+                        const { error: profError } = await _supabase.from('profiles').insert([
+                            { id: authData.user.id, full_name: fullName, role: 'user' }
+                        ]);
+                        alert("Account Registered! Please Sign In.");
+                        switchTab('login');
+                    }
+                } else {
+                    // Sign In Logic
+                    const { data: loginData, error: loginError } = await _supabase.auth.signInWithPassword({ email, password });
+                    if (loginError) throw loginError;
+
+                    if (loginData.user) {
+                        // Role-Based Router Check
+                        const { data: profile, error: pErr } = await _supabase.from('profiles').select('role').eq('id', loginData.user.id).single();
+                        
+                        if (profile && (profile.role === 'district_admin' || profile.role === 'super_admin')) {
+                            window.location.href = "admin.html";
+                        } else {
+                            window.location.href = "citizen.html";
+                        }
+                    }
+                }
+            } catch (err) {
+                alert("Authentication Failed: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = currentMode === 'login' ? "Sign In" : "Register Account";
+            }
+        });
+    </script>
+</body>
+</html>

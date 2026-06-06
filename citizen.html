@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>National Cyber Portal | User Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .mic-active { animation: pulse-red 2s infinite; background-color: #ef4444 !important; color: white !important; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans" onload="initUserPortal()">
+
+    <nav class="bg-[#002e5b] p-4 text-white shadow-lg border-b-4 border-orange-500">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="font-bold uppercase tracking-widest flex items-center">
+                <span class="mr-2">🇮🇳</span> Cyber Reporting Portal
+            </h1>
+            <div class="flex items-center space-x-4">
+                <span id="displayEmail" class="text-[10px] opacity-70 hidden md:block"></span>
+                <button onclick="handleLogout()" class="text-xs border border-white px-3 py-1 rounded hover:bg-white hover:text-blue-900 transition">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto mt-10 px-4 pb-20">
+        <div class="grid lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-2 bg-white p-8 rounded shadow-sm border-t-4 border-blue-800">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800 uppercase tracking-tighter italic">File Official Complaint</h2>
+                <form id="complaintForm" class="space-y-4">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <input type="text" id="name" placeholder="Full Name" class="p-3 border rounded w-full bg-gray-50 outline-none focus:ring-2 focus:ring-blue-400" required>
+                        <input type="tel" id="mobile" placeholder="Mobile Number" class="p-3 border rounded w-full bg-gray-50 outline-none focus:ring-2 focus:ring-blue-400" required>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <select id="crimeType" class="p-3 border rounded w-full bg-gray-50 outline-none cursor-pointer">
+                            <option>Financial Fraud</option><option>Identity Theft</option><option>Cyber Bullying</option><option>Phishing Attack</option>
+                        </select>
+                        <select id="district" class="p-3 border rounded w-full bg-gray-50 outline-none cursor-pointer text-sm" required>
+                            <option value="" disabled selected>Select District</option>
+                            <option value="Bagalkot">Bagalkot</option><option value="Ballari">Ballari</option><option value="Belagavi">Belagavi</option><option value="Bengaluru Rural">Bengaluru Rural</option><option value="Bengaluru Urban">Bengaluru Urban</option><option value="Bidar">Bidar</option><option value="Chamarajanagar">Chamarajanagar</option><option value="Chikballapur">Chikballapur</option><option value="Chikkamagaluru">Chikkamagaluru</option><option value="Chitradurga">Chitradurga</option><option value="Dakshina Kannada">Dakshina Kannada</option><option value="Davanagere">Davanagere</option><option value="Dharwad">Dharwad</option><option value="Gadag">Gadag</option><option value="Hassan">Hassan</option><option value="Haveri">Haveri</option><option value="Kalaburagi">Kalaburagi (Gulbarga)</option><option value="Kodagu">Kodagu</option><option value="Kolar">Kolar</option><option value="Koppal">Koppal</option><option value="Mandya">Mandya</option><option value="Mysuru">Mysuru</option><option value="Raichur">Raichur</option><option value="Ramanagara">Ramanagara</option><option value="Shivamogga">Shivamogga</option><option value="Tumakuru">Tumakuru</option><option value="Udupi">Udupi</option><option value="Uttara Kannada">Uttara Kannada</option><option value="Vijayanagara">Vijayanagara</option><option value="Vijayapura">Vijayapura</option><option value="Yadgir">Yadgir</option>
+                        </select>
+                    </div>
+
+                    <div class="relative space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">Incident Description</label>
+                            
+                            <div class="flex items-center space-x-2">
+                                <label class="text-[9px] font-bold text-blue-900">Language:</label>
+                                <select id="speechLang" class="text-[9px] border rounded px-2 py-1 bg-white outline-none font-bold">
+                                    <option value="en-IN">English (India)</option>
+                                    <option value="kn-IN">ಕನ್ನಡ (Kannada)</option>
+                                    <option value="hi-IN">हिन्दी (Hindi)</option>
+                                    <option value="te-IN">తెలుగు (Telugu)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="relative">
+                            <textarea id="details" placeholder="Describe the incident... You can select your language above and click the microphone button to dictate." class="p-3 border rounded w-full h-40 bg-gray-50 outline-none focus:ring-2 focus:ring-blue-400 pr-12" required></textarea>
+                            
+                            <button type="button" onclick="startDictation()" id="micBtn" class="absolute right-3 bottom-3 p-3 rounded-full bg-blue-100 text-blue-900 shadow-md hover:scale-110 transition-transform">
+                                <span id="micIcon">🎤</span>
+                            </button>
+                        </div>
+                        <p id="micStatus" class="hidden text-[9px] text-red-500 font-black uppercase italic animate-pulse">System is listening... Speak clearly</p>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-4 rounded border border-blue-200">
+                        <label class="block text-xs font-bold text-blue-800 mb-2 uppercase italic tracking-widest">Evidence Attachment</label>
+                        <input type="file" id="evidenceFile" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-900 file:text-white hover:file:bg-blue-800 cursor-pointer">
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="w-full bg-orange-600 text-white font-black py-4 rounded-xl hover:bg-orange-700 shadow-xl uppercase transition tracking-widest transform active:scale-95">
+                        Submit Official Complaint
+                    </button>
+                </form>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-white p-6 rounded shadow-sm border border-gray-200">
+                    <h3 class="font-bold text-gray-700 mb-4 border-b pb-2 uppercase text-[10px] tracking-widest italic">My Active Cases</h3>
+                    <div id="userCasesList" class="space-y-3 overflow-y-auto max-h-[500px]">
+                        <div class="text-center py-10 text-gray-400 italic text-[10px]">Loading ledger records...</div>
+                    </div>
+                </div>
+                
+                <div class="bg-red-50 p-4 rounded border border-red-100">
+                    <p class="text-[9px] text-red-700 font-bold uppercase tracking-widest">Government Notice:</p>
+                    <p class="text-[9px] text-red-600 mt-1 leading-relaxed text-justify">Providing false information is a punishable offense under the IT Act. All IP addresses are logged for forensic tracking purposes.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const _supabase = supabase.createClient("https://vbnnrgalrecuayjabxld.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZibm5yZ2FscmVjdWF5amFieGxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5NDgxNzUsImV4cCI6MjA4ODUyNDE3NX0.a9EFSx9CEisEKXSQ6kcqomxdOxpS7CfCpIijIKys3bk");
+
+        // SPEECH RECOGNITION API ENGINE
+        function startDictation() {
+            if (window.hasOwnProperty('webkitSpeechRecognition') || window.hasOwnProperty('speechRecognition')) {
+                const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                const selectedLang = document.getElementById('speechLang').value;
+                const micBtn = document.getElementById('micBtn');
+                const micIcon = document.getElementById('micIcon');
+                const micStatus = document.getElementById('micStatus');
+                const detailsField = document.getElementById('details');
+
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = selectedLang;
+
+                recognition.onstart = () => {
+                    micBtn.classList.add('mic-active');
+                    micIcon.innerText = "🛑";
+                    micStatus.classList.remove('hidden');
+                };
+
+                recognition.onresult = (e) => {
+                    const transcript = e.results[0][0].transcript;
+                    detailsField.value += (detailsField.value ? " " : "") + transcript;
+                    recognition.stop();
+                };
+
+                recognition.onerror = (e) => {
+                    console.error("Speech Api Error:", e.error);
+                    recognition.stop();
+                };
+
+                recognition.onend = () => {
+                    micBtn.classList.remove('mic-active');
+                    micIcon.innerText = "🎤";
+                    micStatus.classList.add('hidden');
+                };
+
+                recognition.start();
+            } else {
+                alert("Speech recognition API is not supported on this browser. Please load via Chrome or Edge.");
+            }
+        }
+
+        // AUTH & DASHBOARD ROUTER SECURITY
+        async function initUserPortal() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (!user) return window.location.href = "auth.html";
+            document.getElementById('displayEmail').innerText = user.email;
+
+            const { data: profile } = await _supabase.from('profiles').select('role').eq('id', user.id).single();
+            if (profile && (profile.role === 'district_admin' || profile.role === 'super_admin')) {
+                window.location.href = "admin.html";
+                return;
+            }
+            loadMyComplaints(user.id);
+        }
+
+        // LOAD COMPLAINTS FETCH
+        async function loadMyComplaints(userId) {
+            const { data: cases } = await _supabase.from('complaints').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+            const listDiv = document.getElementById('userCasesList');
+            if (cases && cases.length > 0) {
+                listDiv.innerHTML = cases.map(item => `
+                    <div class="p-4 border rounded-xl transition hover:shadow-md ${item.status === 'Resolved' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[10px] font-mono font-bold tracking-tighter">${item.complaint_id}</span>
+                            <span class="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-current">${item.status}</span>
+                        </div>
+                        <p class="text-[11px] font-bold">${item.crime_type}</p>
+                        <div class="flex justify-between items-center mt-2 opacity-60">
+                            <span class="text-[9px] uppercase font-bold">${item.district}</span>
+                            <span class="text-[9px]">${new Date(item.created_at).toLocaleDateString()}</span>
+                        </div>
+                    </div>`).join("");
+            } else {
+                listDiv.innerHTML = `<div class="text-center py-10 text-gray-300 text-[10px] tracking-widest">NO RECORDED CASES FOUND</div>`;
+            }
+        }
+
+        // FORM SUBMISSION AND ATTACHMENT UPLOAD
+        document.getElementById('complaintForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const { data: { user } } = await _supabase.auth.getUser();
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "UPLOADING FORENSIC EVIDENCE..."; btn.disabled = true;
+
+            try {
+                const id = "CC-" + Math.floor(100000 + Math.random() * 900000);
+                const file = document.getElementById('evidenceFile').files[0];
+                let fileURL = "None";
+
+                if (file) {
+                    const fileName = `${Date.now()}_${file.name}`;
+                    await _supabase.storage.from('evidence').upload(fileName, file);
+                    fileURL = _supabase.storage.from('evidence').getPublicUrl(fileName).data.publicUrl;
+                }
+
+                await _supabase.from('complaints').insert([{
+                    complaint_id: id, user_id: user.id, user_name: document.getElementById('name').value,
+                    mobile: document.getElementById('mobile').value, crime_type: document.getElementById('crimeType').value,
+                    district: document.getElementById('district').value, details: document.getElementById('details').value,
+                    evidence_url: fileURL, status: 'Pending'
+                }]);
+
+                alert("Complaint Logged! Tracking ID: " + id);
+                location.reload();
+            } catch (err) { alert("Submission error: " + err.message); }
+            finally { btn.innerText = "Submit Official Complaint"; btn.disabled = false; }
+        });
+
+        function handleLogout() { _supabase.auth.signOut().then(() => window.location.href = "auth.html"); }
+    </script>
+</body>
+</html>
